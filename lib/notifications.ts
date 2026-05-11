@@ -20,7 +20,7 @@ export interface AppNotification {
  * - Tasks due tomorrow that are High priority
  * - Tasks due within 3 days that are High priority
  */
-export function buildNotificationsFromTasks(tasks: Task[]): AppNotification[] {
+export function buildNotificationsFromTasks(tasks: Task[], dailyPlan: PlanItem[] = []): AppNotification[] {
   const now = new Date();
   const notifications: AppNotification[] = [];
 
@@ -81,6 +81,36 @@ export function buildNotificationsFromTasks(tasks: Task[]): AppNotification[] {
         createdAt: now.toISOString(),
         read: false,
       });
+    }
+  }
+
+  // Real-time tracking for Daily Plan items
+  if (dailyPlan && dailyPlan.length > 0) {
+    for (const item of dailyPlan) {
+      if (!item.time) continue;
+      const [hStr, mStr] = item.time.split(':');
+      if (!hStr || !mStr) continue;
+
+      const h = parseInt(hStr, 10);
+      const m = parseInt(mStr, 10);
+      if (isNaN(h) || isNaN(m)) continue;
+
+      const itemTime = new Date(now);
+      itemTime.setHours(h, m, 0, 0);
+
+      const diffMinutes = (now.getTime() - itemTime.getTime()) / 60000;
+
+      // Notify if the current real time is exactly on, or up to 15 minutes past the start time
+      if (diffMinutes >= 0 && diffMinutes <= 15) {
+        notifications.push({
+          id: `plan-${item.time}-${item.title.replace(/\\s+/g, '-')}`,
+          title: '⏰ Time to Start',
+          message: `It's time for "${item.title}" from your daily plan!`,
+          severity: 'info',
+          createdAt: now.toISOString(),
+          read: false,
+        });
+      }
     }
   }
 

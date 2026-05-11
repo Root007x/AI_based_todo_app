@@ -129,7 +129,7 @@ function NotificationPanel({
       {notifications.length > 0 && (
         <div className="px-4 py-2.5 border-t bg-muted/20 text-center">
           <p className="text-xs text-muted-foreground">
-            Notifications auto-refresh every 5 minutes
+            Notifications auto-refresh every minute
           </p>
         </div>
       )}
@@ -141,7 +141,7 @@ function NotificationPanel({
 
 export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
   const pathname = usePathname();
-  const { user, addTask, tasks, notifications, setNotifications, markAllNotificationsRead, dismissNotification } =
+  const { user, addTask, tasks, dailyPlan, notifications, setNotifications, markAllNotificationsRead, dismissNotification } =
     useStore();
 
   const [aiInput, setAiInput] = useState("");
@@ -170,9 +170,9 @@ export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
 
   // ── Build & refresh notifications from tasks ───────────────────────────────
   const refreshNotifications = useCallback(() => {
-    if (tasks.length === 0) return;
+    if (tasks.length === 0 && dailyPlan.length === 0) return;
 
-    const fresh = buildNotificationsFromTasks(tasks);
+    const fresh = buildNotificationsFromTasks(tasks, dailyPlan);
 
     // Preserve read state and createdAt for notifications we already have
     const existing = useStore.getState().notifications;
@@ -190,12 +190,12 @@ export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
     merged
       .filter((n) => !existingIds.has(n.id) && n.severity === "critical")
       .forEach((n) => sendBrowserNotification(n.title, n.message));
-  }, [tasks, setNotifications]);
+  }, [tasks, dailyPlan, setNotifications]);
 
-  // Run on mount and every 5 minutes
+  // Run on mount and every 1 minute
   useEffect(() => {
     refreshNotifications();
-    const interval = setInterval(refreshNotifications, 5 * 60 * 1000);
+    const interval = setInterval(refreshNotifications, 60 * 1000);
     return () => clearInterval(interval);
   }, [refreshNotifications]);
 

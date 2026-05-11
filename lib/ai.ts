@@ -95,7 +95,13 @@ function getMockData(type: string, messages: { role: string; content: string }[]
  * AI Feature 1 — Natural Language Task Parser
  */
 export async function parseNaturalLanguageTask(input: string) {
+  const now = new Date();
+  const currentDate = now.toISOString().split("T")[0];
+  const currentTime = now.toLocaleTimeString();
+
   const prompt = `Parse this task description into structured data: '${input}'
+Important context: The current real date is ${currentDate} and the current time is ${currentTime}.
+Use this context to accurately resolve any relative dates (e.g., "today", "tomorrow", "next Friday") into exact "YYYY-MM-DD" format. If a specific time is mentioned (e.g., "at 3 pm"), include that time detail in the description.
 Return JSON: { "title": "string", "description": "string", "priority": "High" | "Medium" | "Low", "due_date": "YYYY-MM-DD" | null, "tags": ["string"] }`;
 
   return callGroq([{ role: 'user', content: prompt }], "parse");
