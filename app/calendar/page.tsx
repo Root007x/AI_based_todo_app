@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { useStore } from "@/lib/store";
 import { Task } from "@/lib/types";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday, parseISO, differenceInHours } from "date-fns";
-import { AlertTriangle, ChevronLeft, ChevronRight, CheckSquare } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ChevronRight, CheckSquare, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { TaskCard } from "@/components/tasks/TaskCard";
@@ -74,11 +74,17 @@ export default function CalendarPage() {
             <h2 className="text-3xl font-bold tracking-tight">Calendar</h2>
             <p className="text-muted-foreground mt-1">Manage your schedule and deadlines.</p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <Button onClick={() => {
+              setEditingTask(undefined);
+              setIsModalOpen(true);
+            }}>
+              <Plus className="w-4 h-4 mr-2" /> <span className="hidden sm:inline">Add Task</span>
+            </Button>
             <Button variant="outline" onClick={() => setCurrentDate(new Date())}>Today</Button>
             <div className="flex items-center bg-muted/50 rounded-lg p-1">
               <Button variant="ghost" size="icon" onClick={prevMonth}><ChevronLeft className="w-5 h-5"/></Button>
-              <span className="w-32 text-center font-semibold">{format(currentDate, "MMMM yyyy")}</span>
+              <span className="w-24 sm:w-32 text-center font-semibold text-sm sm:text-base">{format(currentDate, "MMMM yyyy")}</span>
               <Button variant="ghost" size="icon" onClick={nextMonth}><ChevronRight className="w-5 h-5"/></Button>
             </div>
           </div>
@@ -120,7 +126,12 @@ export default function CalendarPage() {
                     {dayTasks.map(t => (
                       <div 
                         key={t.id} 
-                        className={`text-[10px] px-1.5 py-0.5 rounded truncate font-medium
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedDate(day);
+                          handleEditTask(t);
+                        }}
+                        className={`text-[10px] px-1.5 py-0.5 rounded truncate font-medium cursor-pointer hover:opacity-80 transition-opacity
                           ${t.status === 'done' ? 'bg-muted text-muted-foreground line-through' :
                             t.priority === 'High' ? 'bg-red-500/10 text-red-600 dark:text-red-400' :
                             t.priority === 'Medium' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' :
@@ -163,6 +174,7 @@ export default function CalendarPage() {
         open={isModalOpen} 
         onOpenChange={setIsModalOpen} 
         initialTask={editingTask} 
+        defaultDueDate={format(selectedDate, "yyyy-MM-dd")}
       />
     </div>
   );

@@ -17,9 +17,10 @@ interface TaskModalProps {
   onOpenChange: (open: boolean) => void;
   initialTask?: Task;
   defaultProjectId?: string;
+  defaultDueDate?: string;
 }
 
-export function TaskModal({ open, onOpenChange, initialTask, defaultProjectId }: TaskModalProps) {
+export function TaskModal({ open, onOpenChange, initialTask, defaultProjectId, defaultDueDate }: TaskModalProps) {
   const { addTask, updateTask, projects } = useStore();
   const [aiInput, setAiInput] = useState("");
   const [loadingAi, setLoadingAi] = useState(false);
@@ -28,7 +29,7 @@ export function TaskModal({ open, onOpenChange, initialTask, defaultProjectId }:
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<Priority>("Medium");
   const [dueDate, setDueDate] = useState("");
-  const [projectId, setProjectId] = useState(defaultProjectId || "none");
+  const [projectId, setProjectId] = useState("none");
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [newSubtask, setNewSubtask] = useState("");
 
@@ -38,14 +39,14 @@ export function TaskModal({ open, onOpenChange, initialTask, defaultProjectId }:
       setTitle(initialTask?.title || "");
       setDescription(initialTask?.description || "");
       setPriority(initialTask?.priority || "Medium");
-      setDueDate(initialTask?.due_date || "");
+      setDueDate(initialTask?.due_date || defaultDueDate || "");
       // Pre-select the defaultProjectId when creating a new task from a project page
       setProjectId(initialTask?.project_id || defaultProjectId || "none");
       setSubtasks(initialTask?.subtasks ? [...initialTask.subtasks] : []);
       setAiInput("");
       setNewSubtask("");
     }
-  }, [open, initialTask, defaultProjectId]);
+  }, [open, initialTask, defaultProjectId, defaultDueDate]);
 
   const handleAiFill = async () => {
     if (!aiInput.trim()) return;

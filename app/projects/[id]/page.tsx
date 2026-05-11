@@ -12,6 +12,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { suggestNextTask } from "@/lib/ai";
 import { Task } from "@/lib/types";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function ProjectDetailsPage() {
   const params = useParams();
@@ -25,6 +26,8 @@ export default function ProjectDetailsPage() {
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
   const [loadingAi, setLoadingAi] = useState(false);
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   if (!project) {
     return (
@@ -40,11 +43,7 @@ export default function ProjectDetailsPage() {
   const progress = projectTasks.length ? (completedTasks / projectTasks.length) * 100 : 0;
 
   const handleDelete = () => {
-    if (confirm("Are you sure you want to delete this project?")) {
-      deleteProject(project.id);
-      toast.success("Project deleted");
-      router.push("/projects");
-    }
+    setIsDeleteModalOpen(true);
   };
 
   const handleAiSuggest = async () => {
@@ -102,7 +101,12 @@ export default function ProjectDetailsPage() {
               <Button variant="secondary" size="sm" onClick={() => setIsProjectModalOpen(true)}>
                 <Edit2 className="w-4 h-4 mr-2" /> Edit Project
               </Button>
-              <Button variant="ghost" size="sm" className="text-destructive" onClick={handleDelete}>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-destructive" 
+                onClick={handleDelete}
+              >
                 <Trash2 className="w-4 h-4 mr-2" /> Delete
               </Button>
             </div>
@@ -172,6 +176,31 @@ export default function ProjectDetailsPage() {
         onOpenChange={setIsProjectModalOpen}
         initialProject={project}
       />
+
+      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Project</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete <strong>{project.name}</strong>? This action cannot be undone, and all tasks inside this project will also be deleted.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>Cancel</Button>
+            <Button 
+              variant="destructive" 
+              onClick={() => { 
+                deleteProject(project.id); 
+                setIsDeleteModalOpen(false); 
+                toast.success("Project deleted"); 
+                router.push("/projects");
+              }}
+            >
+              Delete Project
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
