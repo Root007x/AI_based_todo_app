@@ -41,3 +41,7 @@ server/database.sqlite
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Secrets and keys
+server/serviceAccountKey.json
+server/.env

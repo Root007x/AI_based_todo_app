@@ -13,6 +13,7 @@ import { useStore } from "@/lib/store";
 import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
+import { AccountRole } from "@/lib/types";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -21,7 +22,7 @@ const loginSchema = z.object({
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setUser } = useStore();
+
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -31,19 +32,53 @@ export default function LoginPage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof loginSchema>) {
+  async function onSubmit(values: z.infer<typeof loginSchema>) {
     // Mock Authentication
-    setUser({
-      id: uuidv4(),
+    const role = typeof window !== 'undefined' 
+      ? (localStorage.getItem('mock_login_role') as AccountRole) || "team_leader" 
+      : "team_leader";
+      
+    const userId = uuidv4();
+    const newUser = {
+      id: userId,
       name: values.email.split("@")[0],
       email: values.email,
       avatar: "",
+      role: role,
+      team_id: null as string | null,
       preferences: {
         work_start: "09:00",
         work_end: "17:00",
         focus_hours: 4,
       }
-    });
+    };
+
+    if (role === "team_leader") {
+      const teamId = uuidv4();
+      newUser.team_id = teamId;
+      await useStore.getState().setUser(newUser);
+      await useStore.getState().createTeam({
+        id: teamId,
+        name: "Demo Team",
+        description: "Created for testing push notifications.",
+        owner_id: userId,
+        invite_code: Math.random().toString(36).substring(2, 10).toUpperCase(),
+        created_at: new Date().toISOString(),
+      });
+      await useStore.getState().addTeamMember({
+        id: uuidv4(),
+        team_id: teamId,
+        user_id: userId,
+        name: newUser.name,
+        email: newUser.email,
+        avatar: "",
+        role: "team_leader",
+        status: "active",
+        joined_at: new Date().toISOString()
+      });
+    } else {
+      await useStore.getState().setUser(newUser);
+    }
     
     toast.success("Welcome back!");
     router.push("/dashboard");
@@ -94,6 +129,22 @@ export default function LoginPage() {
                     </FormItem>
                   )}
                 />
+                <div className="space-y-2 pt-2">
+                  <FormLabel>Login Role (Mock Auth Testing)</FormLabel>
+                  <select 
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    onChange={(e) => {
+                      if (typeof window !== 'undefined') {
+                        localStorage.setItem('mock_login_role', e.target.value);
+                      }
+                    }}
+                    defaultValue="team_leader"
+                  >
+                    <option value="developer">Developer</option>
+                    <option value="team_leader">Team Leader</option>
+                  </select>
+                  <p className="text-xs text-muted-foreground">Select Team Leader to test notification sending.</p>
+                </div>
                 <Button type="submit" className="w-full mt-6 text-base h-11">
                   Sign in
                 </Button>

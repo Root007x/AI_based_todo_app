@@ -13,6 +13,7 @@ import { DndContext, DragEndEvent, DragStartEvent, closestCorners, useDroppable,
 export default function TasksPage() {
   const tasks = useStore(state => state.tasks);
   const updateTask = useStore(state => state.updateTask);
+  const user = useStore(state => state.user);
   
   const [view, setView] = useState<"kanban" | "list">("kanban");
   const [search, setSearch] = useState("");
@@ -21,11 +22,15 @@ export default function TasksPage() {
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const filteredTasks = useMemo(() => {
-    return tasks.filter(t => 
-      t.title.toLowerCase().includes(search.toLowerCase()) ||
-      (t.description?.toLowerCase() || "").includes(search.toLowerCase())
-    );
-  }, [tasks, search]);
+    return tasks.filter(t => {
+      const matchesSearch = t.title.toLowerCase().includes(search.toLowerCase()) ||
+        (t.description?.toLowerCase() || "").includes(search.toLowerCase());
+      
+      const canView = user?.role === "team_leader" || t.assignee_id === user?.id || !t.assignee_id;
+      
+      return matchesSearch && canView;
+    });
+  }, [tasks, search, user]);
 
   const columns = useMemo(() => [
     { id: "todo" as TaskStatus, title: "To Do" },

@@ -19,12 +19,18 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project }: ProjectCardProps) {
-  const { tasks, deleteProject } = useStore();
+  const { tasks, deleteProject, user } = useStore();
   const router = useRouter();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  const projectTasks = tasks.filter(t => t.project_id === project.id);
+  const projectTasks = tasks.filter(t => {
+    const inProject = t.project_id === project.id;
+    if (!inProject) return false;
+    if (user?.role === "team_leader") return true;
+    return t.assignee_id === user?.id;
+  });
+  
   const completedTasks = projectTasks.filter(t => t.status === "done").length;
   const progress = projectTasks.length ? (completedTasks / projectTasks.length) * 100 : 0;
 

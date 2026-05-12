@@ -21,7 +21,7 @@ interface TaskModalProps {
 }
 
 export function TaskModal({ open, onOpenChange, initialTask, defaultProjectId, defaultDueDate }: TaskModalProps) {
-  const { addTask, updateTask, projects } = useStore();
+  const { addTask, updateTask, projects, teamMembers, user } = useStore();
   const [aiInput, setAiInput] = useState("");
   const [loadingAi, setLoadingAi] = useState(false);
 
@@ -30,6 +30,7 @@ export function TaskModal({ open, onOpenChange, initialTask, defaultProjectId, d
   const [priority, setPriority] = useState<Priority>("Medium");
   const [dueDate, setDueDate] = useState("");
   const [projectId, setProjectId] = useState("none");
+  const [assigneeId, setAssigneeId] = useState("none");
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [newSubtask, setNewSubtask] = useState("");
 
@@ -42,6 +43,7 @@ export function TaskModal({ open, onOpenChange, initialTask, defaultProjectId, d
       setDueDate(initialTask?.due_date || defaultDueDate || "");
       // Pre-select the defaultProjectId when creating a new task from a project page
       setProjectId(initialTask?.project_id || defaultProjectId || "none");
+      setAssigneeId(initialTask?.assignee_id || "none");
       setSubtasks(initialTask?.subtasks ? [...initialTask.subtasks] : []);
       setAiInput("");
       setNewSubtask("");
@@ -93,6 +95,7 @@ export function TaskModal({ open, onOpenChange, initialTask, defaultProjectId, d
         priority,
         due_date: dueDate || null,
         project_id: projectId === "none" ? null : projectId,
+        assignee_id: assigneeId === "none" ? null : assigneeId,
         subtasks,
       });
       toast.success("Task updated");
@@ -105,6 +108,7 @@ export function TaskModal({ open, onOpenChange, initialTask, defaultProjectId, d
         status: "todo",
         due_date: dueDate || null,
         project_id: projectId === "none" ? null : projectId,
+        assignee_id: assigneeId === "none" ? null : assigneeId,
         subtasks,
         tags: [],
         created_at: new Date().toISOString(),
@@ -207,21 +211,39 @@ export function TaskModal({ open, onOpenChange, initialTask, defaultProjectId, d
             </div>
           </div>
 
-          {/* Project */}
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium">Project</label>
-            <select
-              value={projectId}
-              onChange={(e) => setProjectId(e.target.value)}
-              className="w-full h-9 rounded-lg border border-input bg-background px-3 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-            >
-              <option value="none">No Project</option>
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
+          {/* Project & Assignee */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Project</label>
+              <select
+                value={projectId}
+                onChange={(e) => setProjectId(e.target.value)}
+                className="w-full h-9 rounded-lg border border-input bg-background px-3 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                <option value="none">No Project</option>
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Assign To</label>
+              <select
+                value={assigneeId}
+                onChange={(e) => setAssigneeId(e.target.value)}
+                className="w-full h-9 rounded-lg border border-input bg-background px-3 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                <option value="none">Unassigned</option>
+                {teamMembers.map((m) => (
+                  <option key={m.user_id} value={m.user_id}>
+                    {m.name} {m.user_id === user?.id ? "(You)" : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Subtasks — works in both create AND edit mode */}

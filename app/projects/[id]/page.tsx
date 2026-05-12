@@ -19,7 +19,7 @@ export default function ProjectDetailsPage() {
   const router = useRouter();
   const projectId = params.id as string;
 
-  const { projects, tasks, deleteProject } = useStore();
+  const { projects, tasks, deleteProject, user } = useStore();
   const project = projects.find((p) => p.id === projectId);
 
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -38,7 +38,13 @@ export default function ProjectDetailsPage() {
     );
   }
 
-  const projectTasks = tasks.filter((t) => t.project_id === projectId);
+  const projectTasks = tasks.filter((t) => {
+    const inProject = t.project_id === projectId;
+    if (!inProject) return false;
+    if (user?.role === "team_leader") return true;
+    return t.assignee_id === user?.id;
+  });
+  
   const completedTasks = projectTasks.filter((t) => t.status === "done").length;
   const progress = projectTasks.length ? (completedTasks / projectTasks.length) * 100 : 0;
 

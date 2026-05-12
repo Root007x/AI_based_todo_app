@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useStore } from "@/lib/store";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
+import { FCMProvider } from "@/components/FCMProvider";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -61,6 +62,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-muted/20">
+      <FCMProvider />
       <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
       <div className="flex-1 flex flex-col h-screen overflow-hidden md:ml-[260px]">
         <Topbar onMenuClick={() => setSidebarOpen(true)} />

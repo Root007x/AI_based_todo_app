@@ -1,6 +1,6 @@
-# FlowAI — AI-Powered Task & Project Manager
+# FlowAI — AI-Powered Team Collaboration & Task Manager
 
-> A production-grade, full-stack productivity app powered by Groq AI (Llama 3). Manage tasks, projects, and your daily schedule — all with the help of AI.
+> A production-grade, full-stack productivity app powered by Groq AI and Google Gemini. Manage teams, projects, and daily tasks with voice instructions, real-time activity feeds, and push notifications.
 
 ![FlowAI Banner](https://img.shields.io/badge/FlowAI-AI%20Productivity-7c3aed?style=for-the-badge&logo=sparkles)
 ![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js)
@@ -14,7 +14,9 @@
 ### Prerequisites
 
 - **Node.js** v18 or higher
-- A **Groq API key** (free at [console.groq.com](https://console.groq.com)) — optional, the app works without one using smart mock data
+- A **Groq API key** (free at [console.groq.com](https://console.groq.com))
+- A **Google Gemini API key** (free at [aistudio.google.com](https://aistudio.google.com/app/apikey))
+- A **Firebase Project** with a Service Account Key (for Push Notifications)
 
 ### 1. Install dependencies
 
@@ -22,15 +24,25 @@
 npm install
 ```
 
+*(Note: Ensure dependencies in the `server` folder are also installed if running manually, but `npm install` handles this.)*
+
 ### 2. Configure environment variables
 
-Create or edit the `.env` file in the project root:
+You'll need two environment files.
 
+**Frontend (`/.env`)**:
 ```env
 NEXT_PUBLIC_GROQ_API_KEY=your_groq_api_key_here
 ```
 
-> **Note:** If you skip this step, all AI features will still work using realistic mock data. No crash, no errors.
+**Backend (`/server/.env`)**:
+```env
+PORT=3001
+GEMINI_API_KEY=your_gemini_api_key_here
+```
+
+**Firebase Configuration (`/server/serviceAccountKey.json`)**:
+Download your Firebase service account JSON key from your Firebase Console and place it in the `server/` directory named exactly `serviceAccountKey.json`. If this is omitted, push notifications will be safely mocked in the console!
 
 ### 3. Start the app
 
@@ -47,223 +59,86 @@ This starts **both** the Next.js frontend and the Express/SQLite backend simulta
 
 ### 4. Sign in
 
-Navigate to `http://localhost:3000` — you'll be redirected to the login page. Enter **any email and password** (minimum 6 characters). Authentication is simulated locally; no external service required.
+Navigate to `http://localhost:3000` — you'll be redirected to the login page. Enter **any email and password**. You can select your role from the dropdown (Team Leader or Developer) to test the Role-Based Access Control logic!
 
 ---
 
-## ✨ Features
+## ✨ Core Features
 
-### 🤖 AI Features (Powered by Groq / Llama 3)
+### 🎙️ AI Voice Instructions (Powered by Google Gemini)
+Team Leaders can use the **Voice Instruction Modal** to simply speak their assignments out loud. 
+1. The app records audio directly from your browser.
+2. It sends the audio to the backend where **Gemini 1.5 Flash** accurately transcribes the speech.
+3. A secondary Gemini prompt extracts structured data (Task Title, Priority, Deadline, and Assignee).
+4. The Team Leader reviews the extracted tasks and bulk-creates them with one click!
 
-| Feature | Where | How |
-|---|---|---|
-| **Natural Language Task Creation** | Topbar | Type anything like *"Call John on Friday at 3pm, high priority"* — AI parses it into a structured task |
-| **AI Form Auto-fill** | Task Modal | Describe your task in the AI input box and let AI fill the title, description, priority, and due date |
-| **AI Task Breakdown** | Task Card (⋮ menu) | Click *"AI Breakdown"* on any task to auto-generate 3–6 actionable subtasks |
-| **AI Focus Suggestion** | Dashboard | AI analyzes all pending tasks and recommends the single most important one to work on right now |
-| **AI Daily Planner** | Dashboard | Generates a time-blocked schedule for your entire workday based on your pending tasks and working hours |
-| **AI Project Next Step** | Project Detail Page | Suggests the next best task to tackle within a specific project |
-| **AI Analytics Insights** | Analytics Page | Analyzes your task completion data and generates personalized productivity insights |
+### 👥 Team Collaboration & Roles
+- **Team Leaders**: Can create teams, generate invite codes, create projects, assign roles (Developer/Member), kick members, and send real-time Team Alerts.
+- **Developers/Members**: Can join teams via invite code, view tasks assigned specifically to them, and update task statuses. (Projects are only visible to them if they are actively assigned a task within that project).
 
-> All AI features gracefully fall back to realistic mock data if no API key is configured, so the app is always fully usable.
+### 🔔 Real-Time Firebase Push Notifications
+- Uses Firebase Cloud Messaging (FCM) to deliver OS-level push notifications.
+- **Task Assignment**: Users are instantly notified when a new task is assigned to them.
+- **Status Updates**: Assignees are notified if the status of their task changes (e.g., marked "Done").
+- **Team Alerts**: Team Leaders can broadcast a real-time alert to all team members instantly.
 
----
+### 📜 Team Activity Feed
+- Every action taken in the app (creating a project, assigning a task, completing a task) is automatically logged to the backend.
+- The **Activity Page** displays a beautiful, chronological feed of everything happening across your team.
 
-### 📋 Task Management
-
-- **Create tasks** manually via the modal or using the AI topbar command
-- **Kanban board** with three columns: *To Do*, *In Progress*, *Done*
-- **Drag & drop** tasks between columns to change their status
-- **List view** as an alternative to the Kanban board
-- **Toggle completion** by clicking the circle checkbox on any task card
-- **Edit tasks** — update title, description, priority, due date, project, and subtasks
-- **Delete tasks** from the ⋮ dropdown menu
-- **Subtasks** — add, complete, and delete subtasks within any task (works for both new and existing tasks)
-- **Priority levels**: High 🔴, Medium 🟡, Low 🔵
-- **Search** tasks by title or description
-- **AI badge** displayed on tasks created via AI
-
----
-
-### 📁 Project Management
-
-- **Create projects** with a name, description, color label, and optional due date
-- **Color-coded** project cards for quick visual identification
-- **Project progress bar** showing completed vs total tasks
-- **Project detail page** with full task list scoped to that project
-- **Add tasks to a project** directly from the project page (project is pre-selected automatically)
-- **Edit project** name, description, color, and due date
-- **Delete project** with confirmation
-- **AI Next Step** button to get AI's recommendation on which task to tackle next in the project
-
----
-
-### 📅 Calendar
-
-- **Monthly calendar view** showing all tasks by their due date
-- **Color-coded task chips** on each day (by priority)
-- **Click any day** to see all tasks scheduled for that date in the side panel
-- **Smart Deadline Warning** banner for High priority tasks due within 48 hours
-- Navigate months with Previous/Next controls or jump to Today
-
----
-
-### 📊 Analytics
-
-- **Completion Rate** — percentage of tasks marked done
-- **Avg Tasks / Day** — daily completion velocity
-- **Overdue Tasks** — count of tasks past their due date
-- **Total Projects** overview
-- **Tasks by Priority** — donut chart (High / Medium / Low)
-- **Tasks per Project** — bar chart showing task distribution
-- **AI Insights** — click "Generate AI Insights" for a personalized productivity analysis
-
----
-
-### ⚙️ Settings
-
-| Tab | Options |
-|---|---|
-| **Profile** | Update your display name, email, and upload an avatar image |
-| **Preferences** | Set your work start/end time and daily focus hours goal (used by the AI Planner) |
-| **AI Settings** | Toggle auto-generate daily plan and AI smart insights (UI preview) |
-| **Appearance** | Switch between Light, Dark, and System theme |
-
----
-
-## 🏗️ Architecture
-
-```
-TODO APP/
-├── app/                        # Next.js 14 App Router pages
-│   ├── auth/login/             # Login page
-│   ├── auth/signup/            # Signup page
-│   ├── dashboard/              # Dashboard with AI planner & focus task
-│   ├── tasks/                  # Tasks page — Kanban + List view
-│   ├── projects/               # Projects list
-│   ├── projects/[id]/          # Project detail + scoped task list
-│   ├── calendar/               # Monthly calendar view
-│   ├── analytics/              # Charts + AI insights
-│   └── settings/               # Profile, preferences, appearance
-│
-├── components/
-│   ├── layout/                 # AppLayout, Sidebar, Topbar (global shell)
-│   ├── tasks/                  # TaskCard, TaskModal
-│   ├── projects/               # ProjectCard, ProjectModal
-│   └── ui/                     # shadcn/ui + Base UI components
-│
-├── lib/
-│   ├── ai.ts                   # All Groq AI functions (7 AI features + mock fallbacks)
-│   ├── store.ts                # Zustand global state with optimistic updates + persistence
-│   └── types.ts                # TypeScript types (Task, Project, User, etc.)
-│
-└── server/
-    ├── index.js                # Express REST API (tasks, projects, users)
-    └── database.js             # SQLite setup via sqlite3
-```
-
-### Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Framework | Next.js 14 (App Router) |
-| Language | TypeScript |
-| Styling | Tailwind CSS v3 |
-| UI Components | shadcn/ui + Base UI |
-| State Management | Zustand (with `persist` middleware) |
-| AI | Groq SDK (`llama3-70b-8192` model) |
-| Drag & Drop | `@dnd-kit/core` |
-| Charts | Recharts |
-| Backend | Express.js |
-| Database | SQLite (via `sqlite3`) |
-| Forms | React Hook Form + Zod |
-| Notifications | Sonner toasts |
-
----
-
-## 🔑 Key Behaviors
-
-- **Offline-first**: All state changes are **optimistic** — the UI updates instantly, and changes sync to the SQLite database in the background. If the server is unavailable, local state (via Zustand `persist`) is used.
-- **Auth guard**: All protected pages redirect unauthenticated users to `/auth/login` automatically.
-- **Persistent session**: Your login session persists across browser refreshes via `localStorage`.
-- **No API key needed**: Every AI feature has a realistic mock fallback — the app is 100% usable without a Groq key.
+### 🤖 Generative AI Tools (Powered by Groq / Llama 3)
+- **Natural Language Task Creation** (Top bar)
+- **AI Form Auto-fill** (Task Modal)
+- **AI Task Breakdown** (Auto-generates subtasks)
+- **AI Focus Suggestion & Daily Planner** (Dashboard)
+- **AI Project Next Step** (Project Detail Page)
+- **AI Analytics Insights** (Analytics Page)
 
 ---
 
 ## 📝 Usage Examples & Workflow Guide
 
-### Scenario: Planning a New Project from Scratch
+### Scenario 1: Setting up a Team and Assigning Work
+**Role: Team Leader**
 
-Let's walk through how a user would typically use FlowAI to manage a new project, end-to-end.
+1. **Create the Team**: You log in as a Team Leader. You are prompted to create a Team. You generate an invite code: `FLOW2026`.
+2. **Invite Members**: You navigate to the **Team Management** page, copy the code, and send it to your colleagues. They sign up as Developers, enter the code, and instantly appear in your dashboard.
+3. **Voice Delegation**: You click the **Mic Icon** in the top navigation bar. You click record and say: 
+   *"Hey guys, we need to ship the new API by Friday. Sarah, please handle the database schema update, high priority. John, I need you to write the documentation for it by tomorrow, medium priority."*
+4. **Review & Assign**: The Gemini AI transcribes your audio and extracts two distinct tasks, automatically mapping "Sarah" and "John" to your team members. You click "Create Tasks".
+5. **Instant Notifications**: Sarah and John instantly receive a desktop Push Notification: *"📋 New Task Assigned: Handle the database schema update."*
 
-#### Step 1: Create the Project
-1. Navigate to the **Projects** page from the sidebar.
-2. Click the **+ New Project** button in the top right.
-3. Fill in the details:
-   - **Name**: "Website Redesign"
-   - **Description**: "Overhaul the main landing page and pricing page for Q3."
-   - **Color**: Select a nice blue.
-   - **Due Date**: Pick a date next month.
-4. Click **Create Project**. You'll now see your new project card. Click it to enter the Project Detail page.
+### Scenario 2: Working on Assigned Tasks
+**Role: Developer**
 
-#### Step 2: Use AI to Generate Initial Tasks
-Instead of manually typing out every task, let's use the AI command bar.
-1. Click the **AI input bar** at the very top of the screen (with the ✨ icon).
-2. Type: *"Create a high priority task to design the new landing page wireframes due this Friday for the Website Redesign project."*
-3. Press **Enter**. The AI will parse this natural language, extract the dates/priority, and create the task.
-4. *Alternative*: On the Project Detail page, click **Add Task**. In the modal, find the AI input field at the top and type: *"Write copy for the new pricing tiers"*, then click the sparkle button. The form will auto-fill!
+1. **Focus Mode**: You log in as a Developer. Since you are not a Team Leader, your dashboard only shows Projects and Tasks that have been explicitly assigned to you.
+2. **Break it down**: You open the "Handle database schema update" task. It's quite complex, so you click **"✨ AI Breakdown"**. The Groq AI analyzes the task and generates a checklist of 4 subtasks.
+3. **Mark as Done**: After checking off all subtasks, you drag the task card into the "Done" column.
+4. **Activity Feed**: Your action is automatically logged. The Team Leader checks the **Activity Feed** page and sees a badge: *"Sarah completed the task: Handle database schema update"* along with a timestamp.
 
-#### Step 3: Break Down Complex Tasks
-Now you have a big task like "Design landing page wireframes", but it's too broad.
-1. Go to **My Tasks**.
-2. Find the wireframe task card.
-3. Hover over it, click the **⋮** menu in the top right, and select **✨ AI Breakdown**.
-4. The AI will automatically generate subtasks like:
-   - *Analyze competitor landing pages*
-   - *Draft hero section layout*
-   - *Design features grid*
-   - *Create mobile responsive mockups*
-5. You can now check off these subtasks individually as you work.
+### Scenario 3: Real-Time Emergency
+**Role: Team Leader**
 
-#### Step 4: Plan Your Day
-Fast forward to the next morning. You have several tasks across different projects.
-1. Go to the **Dashboard**.
-2. Look at the **AI Daily Planner** card.
-3. Click **Regenerate Plan**.
-4. The AI looks at all your pending tasks, considers their priorities and due dates, and builds a time-blocked schedule for your day (e.g., 9:00 AM - 11:00 AM: Wireframes, 11:15 AM - 12:00 PM: Write copy).
-
-#### Step 5: Stay on Track with Notifications
-1. If you forget a task, the **Notification Bell** in the top right will show a red badge.
-2. Click it to see the **Notification Center**.
-3. You'll see warnings for tasks due today, overdue tasks, or high-priority tasks coming up soon.
-4. If you clicked "Allow Notifications", you'll even get OS-level popups reminding you of critical deadlines while you work in other tabs!
+1. **The Issue**: The production server goes down. You need all hands on deck.
+2. **Team Alert**: You go to the Team Management page and click **"Send Alert"**.
+3. **Broadcast**: You type: *"Emergency: Prod DB is down. Jump on the voice call immediately."*
+4. **Delivery**: Every single developer on your team receives a critical OS-level push notification instantly via Firebase, ensuring they see it even if they are in another tab.
 
 ---
 
-## 🛠️ Development
+## 🏗️ Architecture
 
-```bash
-# Start dev server (frontend + backend)
-npm run dev
+### Tech Stack
+| Layer | Technology |
+|---|---|
+| **Frontend** | Next.js 14 (App Router), Tailwind CSS, shadcn/ui |
+| **State** | Zustand (optimistic updates + local persistence) |
+| **Generative AI** | Groq SDK (Llama 3), Google Generative AI (Gemini 1.5) |
+| **Backend API** | Express.js (RESTful architecture) |
+| **Database** | SQLite (via `sqlite3`) |
+| **Real-time** | Firebase Cloud Messaging (FCM) |
+| **Uploads** | Multer (for in-memory audio processing) |
 
-# Build for production
-npm run build
-
-# Start production server
-npm start
-
-# Lint
-npm run lint
-```
-
-The backend server runs on port `3001` by default. To change it:
-
-```env
-PORT=3002
-```
-
----
-
-## 📄 License
-
-MIT — feel free to use, modify, and distribute.
+## 🔑 Key Behaviors
+- **Optimistic UI**: All state changes happen instantly in the UI while syncing to the backend silently, ensuring a snappy, app-like feel.
+- **Mock Fallbacks**: If you don't provide a Gemini API key or Firebase Service Account, the app won't crash! It will gracefully fall back to mocked responses and console logs.

@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Bell, Sparkles, Menu, X, CheckCircle2, AlertCircle, Clock, Calendar, BellOff } from "lucide-react";
+import { Bell, Sparkles, Menu, X, CheckCircle2, AlertCircle, Clock, Calendar, BellOff, Mic } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import {
 } from "@/lib/notifications";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
+import { VoiceInstructionModal } from "@/components/voice/VoiceInstructionModal";
 
 // ─── Notification Panel ───────────────────────────────────────────────────────
 
@@ -147,6 +148,7 @@ export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
   const [aiInput, setAiInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
+  const [voiceModalOpen, setVoiceModalOpen] = useState(false);
   const [browserPermission, setBrowserPermission] = useState<NotificationPermission | "unsupported">("unsupported");
   const panelRef = useRef<HTMLDivElement>(null);
   const bellRef = useRef<HTMLDivElement>(null);
@@ -155,6 +157,8 @@ export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
     pathname === "/dashboard" ? "Dashboard" :
     pathname.startsWith("/tasks") ? "My Tasks" :
     pathname.startsWith("/projects") ? "Projects" :
+    pathname.startsWith("/voice") ? "Voice Instructions" :
+    pathname.startsWith("/activity") ? "Activity Feed" :
     pathname.startsWith("/calendar") ? "Calendar" :
     pathname.startsWith("/analytics") ? "Analytics" :
     pathname.startsWith("/settings") ? "Settings" : "FlowAI";
@@ -292,8 +296,20 @@ export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
         </form>
       </div>
 
-      {/* Right: bell + avatar */}
+      {/* Right: voice button + bell + avatar */}
       <div className="flex items-center gap-3">
+        {/* Voice quick-launch — leaders only */}
+        {user?.role === "team_leader" && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-muted-foreground hover:text-primary hidden md:flex"
+            onClick={() => setVoiceModalOpen(true)}
+            title="Voice Instruction"
+          >
+            <Mic className="w-5 h-5" />
+          </Button>
+        )}
         {/* Bell with notification badge */}
         <div className="relative" ref={bellRef}>
           <Button
@@ -331,6 +347,9 @@ export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
           <AvatarFallback>{user?.name?.[0] || "U"}</AvatarFallback>
         </Avatar>
       </div>
+
+      {/* Voice Modal */}
+      <VoiceInstructionModal open={voiceModalOpen} onOpenChange={setVoiceModalOpen} />
     </header>
   );
 }

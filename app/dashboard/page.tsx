@@ -23,6 +23,10 @@ export default function DashboardPage() {
   const [loadingFocus, setLoadingFocus] = useState(false);
   const [loadingPlan, setLoadingPlan] = useState(false);
 
+  const filteredTasks = useMemo(() => {
+    return tasks.filter(t => user?.role === "team_leader" || t.assignee_id === user?.id || !t.assignee_id);
+  }, [tasks, user]);
+
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
     if (hour < 12) return "Good morning";
@@ -31,19 +35,19 @@ export default function DashboardPage() {
   }, []);
 
   const stats = useMemo(() => ({
-    total: tasks.length,
-    dueToday: tasks.filter(t => t.due_date && isToday(parseISO(t.due_date)) && t.status !== "done").length,
-    inProgress: tasks.filter(t => t.status === "in_progress").length,
-    completedWeek: tasks.filter(t => t.status === "done" && isThisWeek(parseISO(t.created_at))).length
-  }), [tasks]);
+    total: filteredTasks.length,
+    dueToday: filteredTasks.filter(t => t.due_date && isToday(parseISO(t.due_date)) && t.status !== "done").length,
+    inProgress: filteredTasks.filter(t => t.status === "in_progress").length,
+    completedWeek: filteredTasks.filter(t => t.status === "done" && isThisWeek(parseISO(t.created_at))).length
+  }), [filteredTasks]);
 
-  const upcomingDeadlines = useMemo(() => tasks
+  const upcomingDeadlines = useMemo(() => filteredTasks
     .filter(t => t.due_date && t.status !== "done" && isBefore(parseISO(t.due_date), addDays(new Date(), 7)))
     .sort((a, b) => new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime())
-    .slice(0, 5), [tasks]);
+    .slice(0, 5), [filteredTasks]);
 
   const fetchFocusTask = async () => {
-    const pendingTasks = tasks.filter(t => t.status !== "done");
+    const pendingTasks = filteredTasks.filter(t => t.status !== "done");
     if (pendingTasks.length === 0) return;
     
     setLoadingFocus(true);
@@ -67,7 +71,7 @@ export default function DashboardPage() {
   };
 
   const fetchDailyPlan = async () => {
-    const pendingTasks = tasks.filter(t => t.status !== "done");
+    const pendingTasks = filteredTasks.filter(t => t.status !== "done");
     if (pendingTasks.length === 0) return;
     
     setLoadingPlan(true);
